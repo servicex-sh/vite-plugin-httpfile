@@ -5,7 +5,7 @@ User-Agent: curl/7.47.0
 
 ### post test
 //@name postTest
-POST https://{{host}}/post
+POST {{baseURL}}/post
 User-Agent: curl/7.47.0
 Content-Type: application/json
 
