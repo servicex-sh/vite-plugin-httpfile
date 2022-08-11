@@ -30,7 +30,7 @@ Content-Type: application/json
 
 ```
  "devDependencies": {
-    "vite-plugin-httpfile": "^0.1.0"
+    "vite-plugin-httpfile": "^0.1.1"
   }
 ```
 
