@@ -11,12 +11,12 @@ An Vite.js plugin to import [httpfile](https://www.jetbrains.com/help/idea/http-
 
 ```
 ### get my ip
-//@name my-ip
+//@name myIp
 GET https://httpbin.org/ip
 User-Agent: curl/7.47.0
 
 ### post test
-//@name post-test
+//@name postTest
 POST https://{{host}}/post
 User-Agent: curl/7.47.0
 Content-Type: application/json
