@@ -95,7 +95,7 @@ class HttpTarget {
             if (this.variables.indexOf(name) < 0) {
                 this.variables.push(name);
             }
-            let value = "${params." + name + "}";
+            let value = "${params." + name + " || ''}";
             newText = newText.substring(0, start) + value + newText.substring(end + 2);
         }
         return newText;
