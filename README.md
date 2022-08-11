@@ -1,4 +1,4 @@
-Rollup httpfile plugin
+Vite httpfile plugin
 =======================
 
 An Vite.js plugin to import [httpfile](https://www.jetbrains.com/help/idea/http-client-in-product-code-editor.html) for HTTP Request/GraphQL request.
