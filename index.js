@@ -1,14 +1,14 @@
-import path from "node:path";
-import fs from "node:fs";
+const path = require("path");
+const fs = require("node:fs");
 
-import {parseHttpfile} from "./httpfile";
+const {parseHttpfile} = require("./httpfile");
 
 /**
  * build Vite httpfile plugin
  * @param {boolean=} verbose - enable verbose logging
  * @returns {{name: string, load: function}} vite plugin object
  */
-export default function viteHttpfilePlugin(verbose) {
+function viteHttpfilePlugin(verbose) {
 
     return {
         name: 'vite-plugin-httpfile', // required, will show up in warnings and errors
@@ -41,3 +41,5 @@ export default function viteHttpfilePlugin(verbose) {
         }
     }
 }
+
+module.exports = viteHttpfilePlugin;

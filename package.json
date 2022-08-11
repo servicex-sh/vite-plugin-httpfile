@@ -4,7 +4,6 @@
   "description": "Vite httpfile plugin to support import http file for HTTP Request/GraphQL request",
   "main": "index.js",
   "types": "index.d.ts",
-  "type": "module",
   "scripts": {
     "test": "vitest run tests/demo.test.ts"
   },
