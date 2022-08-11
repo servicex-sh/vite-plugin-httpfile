@@ -1,5 +1,5 @@
 const path = require("path");
-const fs = require("node:fs");
+const fs = require("fs");
 
 const {parseHttpfile} = require("./httpfile");
 
