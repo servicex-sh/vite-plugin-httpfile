@@ -3,6 +3,8 @@ Vite httpfile plugin
 
 An Vite.js plugin to import [httpfile](https://www.jetbrains.com/help/idea/http-client-in-product-code-editor.html) for HTTP Request/GraphQL request.
 
+![import httpfile](./import-httpfile.png)
+
 # How to use?
 
 * Create a http file, such as `demo.http`, code as following:
