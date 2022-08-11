@@ -1,0 +1,30 @@
+{
+  "name": "vite-plugin-httpfile",
+  "version": "0.1.0",
+  "description": "Vite httpfile plugin to support import http file for HTTP Request/GraphQL request",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run tests/demo.test.ts"
+  },
+  "keywords": [
+    "vite-plugin",
+    "httpfile"
+  ],
+  "author": "linux_china <libing.chen@gmail.com>",
+  "repository": "https://github.com/servicex-sh/vite-plugin-httpfile",
+  "license": "ISC",
+  "devDependencies": {
+    "@tsconfig/node18-strictest-esm": "^1.0.0",
+    "typescript": "^4.7.4",
+    "vite": "^3.0.5",
+    "vitest": "^0.21.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "volta": {
+    "node": "18.7.0"
+  }
+}
