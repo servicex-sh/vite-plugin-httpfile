@@ -117,3 +117,4 @@ Finally, run `vitest` command to run your tests.
 
 * Rollup Plugin Overview: https://rollupjs.org/guide/en/#plugins-overview
 * esbuild-plugin-httpfile: esbuild plugin for httpfile https://github.com/servicex-sh/esbuild-plugin-httpfile
+* rollup-plugin-httpfile: rollup plugin for httpfile https://github.com/servicex-sh/rollup-plugin-httpfile
