@@ -81,7 +81,25 @@ Accept: text/csv
 
 **Note**: if `process.env.NODE_ENV` is `production`, then mock data will not be used.
 
-# Vitest integration
+# GraphQ over HTTP support
+
+Create GraphQL request in http file, code as following:
+
+```
+### graphql test
+//@name graphqlTest
+GRAPHQL https://localhost:8787/graphql
+
+query {
+   welcome(name : "{{nick}}" )
+}
+```
+
+Then call `let response = await graphqlTest({nick:'your_nick'})` just like normal HTTP request.
+
+# Framework Integration
+
+### Vitest integration
 
 `vite.config.ts` configuration file as following:
 
@@ -114,6 +132,33 @@ test("my-ip", async () => {
 ```
 
 Finally, run `vitest` command to run your tests.
+
+### Astro Integration
+
+Astro configuration file `astro.config.mjs` as following:
+
+```typescript
+import {defineConfig} from "astro/config";
+import viteHttpfilePlugin from "vite-plugin-httpfile";
+
+export default defineConfig({
+        vite: {
+            plugins: [viteHttpfilePlugin(true)]
+        }
+    }
+);
+```
+
+Then import http file in astro file: 
+
+```
+---
+import {myIp} from "./httpbin.http";
+let response = await myIp();
+const ip = (await response.json()).origin;
+---
+<h1>Your ip: {ip}</h1>
+```
 
 # References
 
