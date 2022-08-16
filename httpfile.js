@@ -9,6 +9,15 @@ function jsonStringify(obj) {
     });
 }
 
+function getJsRequestName(requestName) {
+    let parts = requestName.split("-");
+    if (parts.length > 1) {
+        return parts[0] + parts.slice(1).map(word => word[0].toUpperCase() + word.slice(1)).join("");
+    } else {
+        return requestName;
+    }
+}
+
 class HttpTarget {
 
     constructor(index) {
@@ -46,7 +55,7 @@ class HttpTarget {
         if (this.name === undefined) {
             this.name = "http" + this.index;
         } else {
-            this.name = this.name.replaceAll("-", "");
+            this.name = getJsRequestName(this.name);
         }
         let mockLines = this.tags.filter(t => t.startsWith("mock "))
             .map(t => t.substring(5).trim());
