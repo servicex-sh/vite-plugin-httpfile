@@ -9,6 +9,13 @@ function jsonStringify(obj) {
     });
 }
 
+function escapeJson(text) {
+    return text.replaceAll("\n", "\\\\n")
+        .replaceAll('"', '\\\\"')
+        .replaceAll("\r", "\\\\r")
+        .replaceAll("\t", "\\\\t");
+}
+
 function getJsRequestName(requestName) {
     let parts = requestName.split("-");
     if (parts.length > 1) {
@@ -49,6 +56,9 @@ class HttpTarget {
             this.url = this.replaceVariables(this.url);
         }
         if (this.body) {
+            if (this.method === "GRAPHQL") {
+                this.cleanGraphql();
+            }
             this.body = this.replaceVariables(this.body.trimEnd());
             this.body = this.body.replaceAll("`", "\\`");
         }
@@ -110,8 +120,7 @@ class HttpTarget {
         return newText;
     }
 
-    extractGraphqlDoc() {
-        let doc = {};
+    cleanGraphql() {
         let variablesOffset = -1;
         let variablesOffsetEnd = -1;
         for (let i = 0; i < this.bodyLines.length; i++) {
@@ -125,43 +134,21 @@ class HttpTarget {
         // variables json included in body
         if (variablesOffset > 0 && variablesOffsetEnd > variablesOffset) {
             let query = this.bodyLines.slice(0, variablesOffset).join(LINE_TERMINATOR);
-            doc["query"] = query.replaceAll("`", "\\`");
-            doc["variables"] = JSON.parse(this.bodyLines.slice(variablesOffset, variablesOffsetEnd + 1).join(LINE_TERMINATOR));
+            let variables = this.bodyLines.slice(variablesOffset, variablesOffsetEnd + 1).join(LINE_TERMINATOR)
+            this.body = `{"query": "${escapeJson(query)}", "variables": ${variables}}`;
         } else { // query only
-            doc["query"] = this.body;
+            this.body = `{"query": "${escapeJson(this.body)}"}`;
         }
-        return doc;
     }
 
     toApiDeclare() {
-        if (this.method === "GRAPHQL") {
-            let signatures = [];
-            if (this.variables.length > 0) {
-                let paramsSignature = "params: {" + this.variables.map(v => {
-                    return v + ": string"
-                }).join(", ") + "}";
-                signatures.push(paramsSignature);
-            }
-            let doc = this.extractGraphqlDoc();
-            if (doc.variables) {
-                let graphqlVariableNames = Object.keys(doc.variables);
-                if (graphqlVariableNames.length > 0) {
-                    let variablesSignature = "variables: {" + graphqlVariableNames.map(v => {
-                        return v + ": string"
-                    }).join(", ") + "}";
-                    signatures.push(variablesSignature);
-                }
-            }
-            return "export function " + this.name + "(" + signatures.join(", ") + "): Promise<Response>;"
-        } else { //HTTP request
-            if (this.variables.length === 0) {
-                return "export function " + this.name + "(): Promise<Response>;"
-            } else {
-                let paramsSignature = "params: {" + this.variables.map(v => {
-                    return v + ": string"
-                }).join(", ") + "}";
-                return "export function " + this.name + "(" + paramsSignature + "): Promise<Response>;"
-            }
+        if (this.variables.length === 0) {
+            return "export function " + this.name + "(): Promise<Response>;"
+        } else {
+            let paramsSignature = "params: {" + this.variables.map(v => {
+                return v + ": string"
+            }).join(", ") + "}";
+            return "export function " + this.name + "(" + paramsSignature + "): Promise<Response>;"
         }
     }
 
@@ -184,58 +171,40 @@ class HttpTarget {
     }
 
     toCode() {
+        let httpMethod = this.method;
         let functionParamNames = [];
         if (this.variables.length > 0) {
             functionParamNames.push("params");
         }
         const mockedRequest = this.isMocked();
+        let headers = this.headers ?? {}
         if (this.method === "GRAPHQL") {
-            let headers = this.headers ?? {}
             headers["Content-Type"] = "application/json"
-            let doc = this.extractGraphqlDoc();
-            let query = doc['query'];
-            let variablesDecl = "";
-            if (doc['variables']) {
-                functionParamNames.push("variables");
-                variablesDecl = "variables: {..." + jsonStringify(doc['variables']) + ", ...(variables??{})},";
-            }
-            let methodDeclaration = "export async function " + this.name + "(" + functionParamNames.join(",") + ")";
+            httpMethod = "POST";
+        }
+        if (this.body) {
+            let methodDeclaration = "export async function " + this.name + "(" + functionParamNames.join(",") + ") ";
             if (mockedRequest) {
                 return this.toMockCode(methodDeclaration);
             }
             return methodDeclaration + " {\n" +
-                "    let doc = {" + variablesDecl + " query: `" + query + "`};\n" +
                 "    return await fetch(`" + this.url + "`, {\n" +
-                "        method: 'POST',\n" +
+                "        method: '" + httpMethod + "',\n" +
                 "        headers: " + jsonStringify(headers) + ",\n" +
-                "        body: JSON.stringify(doc) \n" +
+                "        body: `" + this.body + "`" +
                 "    });\n" +
                 "}";
-        } else if (this.method === "POST" || this.method === "GET") {
-            if (this.body) {
-                let methodDeclaration = "export async function " + this.name + "(" + functionParamNames.join(",") + ") ";
-                if (mockedRequest) {
-                    return this.toMockCode(methodDeclaration);
-                }
-                return methodDeclaration + " {\n" +
-                    "    return await fetch(`" + this.url + "`, {\n" +
-                    "        method: '" + this.method + "',\n" +
-                    "        headers: " + jsonStringify(this.headers) + ",\n" +
-                    "        body: `" + this.body + "`" +
-                    "    });\n" +
-                    "}";
-            } else {
-                let methodDeclaration = "export async function " + this.name + "(" + functionParamNames.join(",") + ") ";
-                if (mockedRequest) {
-                    return this.toMockCode(methodDeclaration);
-                }
-                return methodDeclaration + " {\n" +
-                    "    return await fetch(`" + this.url + "`, {\n" +
-                    "        method: '" + this.method + "',\n" +
-                    "        headers: " + jsonStringify(this.headers) + "\n" +
-                    "    });\n" +
-                    "}"
+        } else {
+            let methodDeclaration = "export async function " + this.name + "(" + functionParamNames.join(",") + ") ";
+            if (mockedRequest) {
+                return this.toMockCode(methodDeclaration);
             }
+            return methodDeclaration + " {\n" +
+                "    return await fetch(`" + this.url + "`, {\n" +
+                "        method: '" + httpMethod + "',\n" +
+                "        headers: " + jsonStringify(headers) + "\n" +
+                "    });\n" +
+                "}"
         }
     }
 }
@@ -287,7 +256,8 @@ function parseHttpfile(text) {
             && (line.indexOf("  /") >= 0 || line.indexOf("  ?") >= 0 || line.indexOf("  &") >= 0)
             && httpTarget.headers === undefined) { // long request url into several lines
             httpTarget.url = httpTarget.url + line.trim();
-        } else if (line.indexOf(":") > 0 && httpTarget.body === undefined && httpTarget.script === undefined) { // http headers
+        } else if (line.indexOf(":") > 0 && line.substring(0, line.indexOf(":")).trim().indexOf(" ") < 0
+            && httpTarget.body === undefined && httpTarget.script === undefined) { // http headers
             let offset = line.indexOf(":");
             httpTarget.addHeader(line.slice(0, offset).trim(), line.slice(offset + 1).trim());
         } else if (line.startsWith("<> ")) { //response-ref
@@ -320,6 +290,5 @@ function parseHttpfile(text) {
     }
     return targets;
 }
-
 
 module.exports = {parseHttpfile};
